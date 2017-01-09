@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: tcp-gitlab-configmap
+  name: tcp-ingress-configmap
   namespace: gitlab
 data:
-  1022: "gitlab/gitlab:1022"
+  2222: "gitlab/gitlab:22"
