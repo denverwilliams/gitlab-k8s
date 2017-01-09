@@ -8,6 +8,6 @@ data:
   ## ref: https://gitlab.com/gitlab-org/omnibus-gitlab/blob/master/files/gitlab-config-template/gitlab.rb.template
   ##
   gitlab_omnibus_config: |
-    external_url 'http://example.com'
-    gitlab_rails['gitlab_shell_ssh_port'] = 2222
+    external_url 'http://example.ii.org.nz'
     gitlab_rails['initial_root_password'] = "P@ssw0rd"
+    gitlab_rails['gitlab_shell_ssh_port'] = 2222
