@@ -1,13 +1,15 @@
 apiVersion: extensions/v1beta1
-kind: DaemonSet
+kind: Deployment
 metadata:
-  name: nginx-ingress-lb
+  name: nginx-ingress-controller
   namespace: gitlab
 spec:
+  replicas: 1
+  revisionHistoryLimit: 3
   template:
     metadata:
       labels:
-        name: nginx-ingress-lb
+        k8s-app: nginx-ingress-lb
     spec:
       terminationGracePeriodSeconds: 60
       containers:
@@ -32,11 +34,8 @@ spec:
                 fieldPath: metadata.namespace
         ports:
         - containerPort: 80
-          hostPort: 80
         - containerPort: 443
-          hostPort: 443
         - containerPort: 2222
-          hostPort: 2222
         args:
         - /nginx-ingress-controller
         - --default-backend-service=$(POD_NAMESPACE)/default-http-backend

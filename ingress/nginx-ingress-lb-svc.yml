@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-ingress
+  namespace: gitlab
+spec:
+  externalIPs: [192.168.1.172]
+  ports:
+    - name: http
+      port: 80
+    - name: https
+      port: 443
+    - name: ssh
+      port: 2222
+  selector:
+    k8s-app: nginx-ingress-lb
