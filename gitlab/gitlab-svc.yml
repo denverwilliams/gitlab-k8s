@@ -4,15 +4,16 @@ metadata:
   name: gitlab
   namespace: gitlab
   labels:
-    name: gitlab
+    app: gitlab
 spec:
-  type: LoadBalancer
-  selector:
-    name: gitlab
   ports:
     - name: http
       port: 80
       targetPort: http
+      protocol: TCP
     - name: ssh
-      port: 1022
+      port: 22
       targetPort: ssh
+      protocol: TCP
+  selector:
+    app: gitlab

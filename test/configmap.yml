@@ -1,6 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: tcp-game-configmap
-data:
-  80: "game2048:80"
