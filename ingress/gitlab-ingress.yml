@@ -5,19 +5,44 @@ metadata:
   namespace: gitlab
   labels:
     name: gitlab
+  annotations:
+    kubernetes.io/tls-acme: "true"
+    kubernetes.io/ingress.class: "nginx"
 spec:
+  tls:
+  - hosts:
+    - gitlab.@GITLAB_GKE_DOMAIN@
+    - registry.@GITLAB_GKE_DOMAIN@
+    - mattermost.@GITLAB_GKE_DOMAIN@
+    - prometheus.@GITLAB_GKE_DOMAIN@
+    secretName: gitlab-tls
   rules:
-  - host: git.example.com
+  - host: gitlab.@GITLAB_GKE_DOMAIN@
     http:
       paths:
       - path: /
         backend:
           serviceName: gitlab
-          servicePort: 80
-#  - host: git-ssh.example.com
-#    http:
-#      paths:
-#      - path: /
-#        backend:
-#          serviceName: gitlab
-#          servicePort: 1022
+          servicePort: 8005
+  - host: registry.@GITLAB_GKE_DOMAIN@
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: gitlab
+          servicePort: 8105
+  - host: mattermost.@GITLAB_GKE_DOMAIN@
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: gitlab
+          servicePort: 8065
+  - host: prometheus.@GITLAB_GKE_DOMAIN@
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: gitlab
+          servicePort: 9090
+---

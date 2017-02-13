@@ -1,0 +1,78 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gitlab-patches
+  namespace: gitlab
+data:
+  fix-git-hooks.patch: |
+    diff --git a/app/models/repository.rb b/app/models/repository.rb
+    index 30be726243..0776c7ccc5 100644
+    --- a/app/models/repository.rb
+    +++ b/app/models/repository.rb
+    @@ -160,14 +160,18 @@ class Repository
+         tags.find { |tag| tag.name == name }
+       end
+
+    -  def add_branch(user, branch_name, target)
+    +  def add_branch(user, branch_name, target, with_hooks: true)
+         oldrev = Gitlab::Git::BLANK_SHA
+         ref    = Gitlab::Git::BRANCH_REF_PREFIX + branch_name
+         target = commit(target).try(:id)
+
+         return false unless target
+
+    -    GitHooksService.new.execute(user, path_to_repo, oldrev, target, ref) do
+    +    if with_hooks
+    +      GitHooksService.new.execute(user, path_to_repo, oldrev, target, ref) do
+    +        update_ref!(ref, target, oldrev)
+    +      end
+    +    else
+           update_ref!(ref, target, oldrev)
+         end
+
+    diff --git a/app/services/commits/change_service.rb b/app/services/commits/change_service.rb
+    index 1c82599c57..2d4c9788d0 100644
+    --- a/app/services/commits/change_service.rb
+    +++ b/app/services/commits/change_service.rb
+    @@ -55,7 +55,7 @@ module Commits
+           return success if repository.find_branch(new_branch)
+
+           result = CreateBranchService.new(@project, current_user)
+    -                                  .execute(new_branch, @target_branch, source_project: @source_project)
+    +                                  .execute(new_branch, @target_branch, source_project: @source_project, with_hooks: false)
+
+           if result[:status] == :error
+             raise ChangeError, "There was an error creating the source branch: #{result[:message]}"
+    diff --git a/app/services/create_branch_service.rb b/app/services/create_branch_service.rb
+    index 757fc35a78..a6a3461e17 100644
+    --- a/app/services/create_branch_service.rb
+    +++ b/app/services/create_branch_service.rb
+    @@ -1,5 +1,5 @@
+     class CreateBranchService < BaseService
+    -  def execute(branch_name, ref, source_project: @project)
+    +  def execute(branch_name, ref, source_project: @project, with_hooks: true)
+         valid_branch = Gitlab::GitRefValidator.validate(branch_name)
+
+         unless valid_branch
+    @@ -26,7 +26,7 @@ class CreateBranchService < BaseService
+
+                        repository.find_branch(branch_name)
+                      else
+    -                   repository.add_branch(current_user, branch_name, ref)
+    +                   repository.add_branch(current_user, branch_name, ref, with_hooks: with_hooks)
+                      end
+
+         if new_branch
+    diff --git a/app/services/files/base_service.rb b/app/services/files/base_service.rb
+    index 9bd4bd464f..1802b932e0 100644
+    --- a/app/services/files/base_service.rb
+    +++ b/app/services/files/base_service.rb
+    @@ -74,7 +74,7 @@ module Files
+         end
+
+         def create_target_branch
+    -      result = CreateBranchService.new(project, current_user).execute(@target_branch, @source_branch, source_project: @source_project)
+    +      result = CreateBranchService.new(project, current_user).execute(@target_branch, @source_branch, source_project: @source_project, with_hooks: false)
+
+           unless result[:status] == :success
+             raise_error("Something went wrong when we tried to create #{@target_branch} for you: #{result[:message]}")
